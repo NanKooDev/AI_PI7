@@ -1,0 +1,4 @@
+*.docx
+*.mp4
+*.pdf
+*/__pycache__/

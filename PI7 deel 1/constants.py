@@ -1,0 +1,29 @@
+import pygame
+
+#Game settings
+WIDTH, HEIGHT = 600, 600
+ROWS, COLS = 6, 6
+SQUARE_SIZE = WIDTH//COLS
+FPS = 60
+
+#Player settings
+EMPTY = 0
+PLAYER1 = 1
+PLAYER2 = 2
+DESTROYED = 3
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+GRAY = (128, 128, 128)
+ALT_GRAY = (200, 200, 200)
+SEMI_GREEN_ALT_GRAY = (99, 227, 99)
+SEMI_GREEN_GRAY = (63,191,63)
+SEMI_GREEN_WHITE = (127, 255, 127)
+
+#Images
+QUEEN = "chess-queen.svg"
+QUEEN_SIZE = 330
