@@ -5,6 +5,7 @@ WIDTH, HEIGHT = 600, 600
 ROWS, COLS = 6, 6
 SQUARE_SIZE = WIDTH//COLS
 FPS = 60
+MAX_DEPTH = 3
 
 #Player settings
 EMPTY = 0
