@@ -89,15 +89,15 @@ class Game():
         
         #if player is specified, return the position of the specified player
         if player:
-            for i in range(constants.ROWS):
-                for j in range(constants.COLS):
-                    if self.board[i][j] == player:
-                        return i, j
+            for row in range(constants.ROWS):
+                for col in range(constants.COLS):
+                    if self.board[row][col] == player:
+                        return row, col
         else:
-            for i in range(constants.ROWS):
-                for j in range(constants.COLS):
-                    if self.board[i][j] == self.turn:
-                        return i, j
+            for row in range(constants.ROWS):
+                for col in range(constants.COLS):
+                    if self.board[row][col] == self.turn:
+                        return row, col
                 
     def is_game_over(self, active_player: int=None):
         """
@@ -112,11 +112,14 @@ class Game():
             if len(self.available_moves(active_player)) == constants.EMPTY:
                 self.winner = constants.PLAYER1 if active_player == constants.PLAYER2 else constants.PLAYER2
                 return True
-        
+            else:
+                return False
         
         if len(self.available_moves()) == constants.EMPTY:
             self.winner = constants.PLAYER1 if self.turn == constants.PLAYER2 else constants.PLAYER2
             return True
+        
+        return False
 
     def available_moves(self, player=None):
         """
@@ -132,10 +135,10 @@ class Game():
         else:
             player_row, player_col = self.getplayer()
         moves = []
-        for i in range(constants.ROWS):
-            for j in range(constants.COLS):
-                if self.is_move_valid(player_row, player_col, i, j):
-                    moves.append((i, j))
+        for dest_row in range(constants.ROWS):
+            for dest_col in range(constants.COLS):
+                if self.is_move_valid(player_row, player_col, dest_row, dest_col):
+                    moves.append((dest_row, dest_col))
         return moves
 
     def drawboard(self):
@@ -205,9 +208,9 @@ class Game():
 #takes a game object and returns the best move for the current player
 
 def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
-    if is_maximizing and game.is_game_over(constants.PLAYER2):
+    if game.is_game_over(constants.PLAYER2):
         return -100
-    elif not is_maximizing and game.is_game_over(constants.PLAYER1):
+    elif game.is_game_over(constants.PLAYER1):
         return 100
         
     #if depth is max_depth, check the possible amount of moves for the current player
@@ -249,14 +252,16 @@ running = True
 game = Game()
 
 game.board[0][0] = constants.PLAYER1
-game.board[5][5] = constants.PLAYER2
+game.board[5][5] = constants.DESTROYED
 
 game.board[5][4] = constants.DESTROYED
 game.board[4][5] = constants.DESTROYED
+game.board[4][4] = constants.DESTROYED
 game.board[3][3] = constants.DESTROYED
 game.board[2][3] = constants.DESTROYED
 game.board[2][4] = constants.DESTROYED
 game.board[2][5] = constants.DESTROYED
+game.board[3][4] = constants.PLAYER2
 
 
 while running:
@@ -265,6 +270,15 @@ while running:
 
     # RENDER YOUR GAME HERE
     game.drawboard()
+    
+    if game.is_game_over():
+        #draw winner text on screen
+        GAME_FONT = pygame.freetype.SysFont("Arial", 50)
+        text_surface, rect = GAME_FONT.render(f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
+        GAME_FONT.render_to(screen, (constants.WIDTH//2 - rect.width//2, constants.HEIGHT//2 - rect.height//2), f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
+        
+        running = False
+    
     
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
@@ -303,10 +317,17 @@ while running:
                     #make the AI move
                     player_row, player_col = game.getplayer()
                     for move in game.available_moves():
+                        
+                        dest_row, dest_col = move
+                        player_row, player_col = game.getplayer(constants.PLAYER2)
+                        game.move(player_row, player_col, dest_row, dest_col, constants.PLAYER2)
+                       
                         score = MiniMax(game, 0, False)
                         if score > bestScore:
                             bestScore = score
                             bestmove = move
+                        game.board[player_row][player_col] = constants.PLAYER2
+                        game.board[dest_row][dest_col] = constants.EMPTY
                         
                     game.move(player_row, player_col, bestmove[0], bestmove[1])
 
