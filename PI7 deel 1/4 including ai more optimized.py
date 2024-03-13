@@ -53,6 +53,7 @@ class Game():
     def move(self, player_row, player_col, dest_row, dest_col, simulate_player: int=None):
         """
         Move the current player to the destination position.
+        Also switches the turn to the other player. and increments the moves.
 
         Parameters:
         - player_row (int): row-coordinate of the current player's position
