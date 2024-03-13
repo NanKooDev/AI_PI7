@@ -252,16 +252,7 @@ running = True
 game = Game()
 
 game.board[0][0] = constants.PLAYER1
-game.board[5][5] = constants.DESTROYED
-
-game.board[5][4] = constants.DESTROYED
-game.board[4][5] = constants.DESTROYED
-game.board[4][4] = constants.DESTROYED
-game.board[3][3] = constants.DESTROYED
-game.board[2][3] = constants.DESTROYED
-game.board[2][4] = constants.DESTROYED
-game.board[2][5] = constants.DESTROYED
-game.board[3][4] = constants.PLAYER2
+game.board[5][5] = constants.PLAYER2
 
 
 while running:
