@@ -215,10 +215,7 @@ def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
         
     #if depth is max_depth, check the possible amount of moves for the current player
     if depth == constants.MAX_DEPTH:
-        if is_maximizing:
-            return len(game.available_moves(constants.PLAYER2))
-        else:
-            return 0 - len(game.available_moves(constants.PLAYER1))
+            return len(game.available_moves(constants.PLAYER2)) - len(game.available_moves(constants.PLAYER1))
         
     if is_maximizing:
         Bestscore = -1000
