@@ -251,23 +251,50 @@ game = Game()
 game.board[0][0] = constants.PLAYER1
 game.board[5][5] = constants.PLAYER2
 
-
-while running:
+def draw_winner_on_screen(game, screen):
+        GAME_FONT = pygame.freetype.SysFont("Arial", 50)
+        text_surface, rect = GAME_FONT.render(f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
+        GAME_FONT.render_to(screen, (constants.WIDTH//2 - rect.width//2, constants.HEIGHT//2 - rect.height//2), f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
+        pygame.display.flip()
+                
+def draw_screen(game, screen):
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("purple")
 
     # RENDER YOUR GAME HERE
     game.drawboard()
     
-    if game.is_game_over():
-        #draw winner text on screen
-        GAME_FONT = pygame.freetype.SysFont("Arial", 50)
-        text_surface, rect = GAME_FONT.render(f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
-        GAME_FONT.render_to(screen, (constants.WIDTH//2 - rect.width//2, constants.HEIGHT//2 - rect.height//2), f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
+    # flip() the display to put your work on screen
+    pygame.display.flip()
+
+def ai_move(game):
+    bestScore = -1000
+    bestmove = (0, 0)
+    
+    #make the AI move
+    player_row, player_col = game.getplayer()
+    for move in game.available_moves():
         
+        dest_row, dest_col = move
+        player_row, player_col = game.getplayer(constants.PLAYER2)
+        game.move(player_row, player_col, dest_row, dest_col, constants.PLAYER2)
+        
+        score = MiniMax(game, 0, False)
+        if score > bestScore:
+            bestScore = score
+            bestmove = move
+        game.board[player_row][player_col] = constants.PLAYER2
+        game.board[dest_row][dest_col] = constants.EMPTY
+        
+    game.move(player_row, player_col, bestmove[0], bestmove[1])
+
+while running:
+    draw_screen(game, screen)
+    
+    if game.is_game_over():
+        draw_winner_on_screen(game, screen)
         running = False
-    
-    
+            
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     for event in pygame.event.get():
@@ -280,47 +307,13 @@ while running:
             dest_row, dest_col = row // constants.SQUARE_SIZE, col // constants.SQUARE_SIZE
             if game.move(player_row, player_col, dest_row, dest_col):
                 if game.is_game_over():
-                    
                     game.drawboard()
-                    
-                    #draw winner text on screen
-                    GAME_FONT = pygame.freetype.SysFont("Arial", 50)
-                    text_surface, rect = GAME_FONT.render(f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
-                    GAME_FONT.render_to(screen, (constants.WIDTH//2 - rect.width//2, constants.HEIGHT//2 - rect.height//2), f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
-                    
+                    draw_winner_on_screen()
+
                     running = False
                 else:
-                    # fill the screen with a color to wipe away anything from last frame
-                    screen.fill("purple")
-
-                    # RENDER YOUR GAME HERE
-                    game.drawboard()
-                    
-                    # flip() the display to put your work on screen
-                    pygame.display.flip()
-                    
-                    bestScore = -1000
-                    bestmove = (0, 0)
-                    
-                    #make the AI move
-                    player_row, player_col = game.getplayer()
-                    for move in game.available_moves():
-                        
-                        dest_row, dest_col = move
-                        player_row, player_col = game.getplayer(constants.PLAYER2)
-                        game.move(player_row, player_col, dest_row, dest_col, constants.PLAYER2)
-                       
-                        score = MiniMax(game, 0, False)
-                        if score > bestScore:
-                            bestScore = score
-                            bestmove = move
-                        game.board[player_row][player_col] = constants.PLAYER2
-                        game.board[dest_row][dest_col] = constants.EMPTY
-                        
-                    game.move(player_row, player_col, bestmove[0], bestmove[1])
-
-    # flip() the display to put your work on screen
-    pygame.display.flip()
+                    draw_screen(game, screen)
+                    ai_move(game)
 
     clock.tick(constants.FPS)  # limits FPS to 60
 
