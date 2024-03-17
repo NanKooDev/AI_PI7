@@ -215,7 +215,7 @@ def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
         return constants.WINNING_SCORE
         
     #if depth is max_depth, check the possible amount of moves for the current player
-    if depth >= (pow(game.moves,1.6)/17)+1: #constants.MAX_DEPTH:
+    if depth >= (pow(game.moves,1.6)/17)+1: #constants.MAX_DEPTH: https://www.desmos.com/calculator/bijlk0fzbv
             return len(game.available_moves(constants.PLAYER2)) - len(game.available_moves(constants.PLAYER1))
         
     current_player = constants.PLAYER1
