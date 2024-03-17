@@ -210,16 +210,17 @@ class Game():
 
 def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
     if game.is_game_over(constants.PLAYER2):
-        return -100
+        return -constants.WINNING_SCORE
     elif game.is_game_over(constants.PLAYER1):
-        return 100
+        return constants.WINNING_SCORE
         
     #if depth is max_depth, check the possible amount of moves for the current player
     if depth == constants.MAX_DEPTH:
             return len(game.available_moves(constants.PLAYER2)) - len(game.available_moves(constants.PLAYER1))
         
+        
     if is_maximizing:
-        Bestscore = -1000
+        Bestscore = -constants.DEFAULT_BEST_SCORE
         for move in game.available_moves(constants.PLAYER2):
             dest_x_axis, dest_y_axis = move
             player_x_axis, player_y_axis = game.getplayer(constants.PLAYER2)
@@ -230,7 +231,7 @@ def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
             Bestscore = max(score, Bestscore)
         return Bestscore
     else:
-        Bestscore = 1000
+        Bestscore = constants.DEFAULT_BEST_SCORE
         for move in game.available_moves(constants.PLAYER1):
             dest_x_axis, dest_y_axis = move
             player_x_axis, player_y_axis = game.getplayer(constants.PLAYER1)
@@ -258,7 +259,7 @@ def draw_screen(game, screen):
     pygame.display.flip()
 
 def ai_move(game):
-    bestScore = -1000
+    bestScore = -constants.DEFAULT_BEST_SCORE
     bestmove = (0, 0)
     
     #make the AI move
