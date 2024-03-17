@@ -218,33 +218,28 @@ def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
     if depth >= game.moves/2.5+1: #constants.MAX_DEPTH:
             return len(game.available_moves(constants.PLAYER2)) - len(game.available_moves(constants.PLAYER1))
         
-        
+    current_player = constants.PLAYER1
+    best_score = constants.DEFAULT_BEST_SCORE
+    winning_score = -constants.WINNING_SCORE
+    get_best_score = max if is_maximizing else min #uses the max function if is_maximizing is True, else uses the min function
     if is_maximizing:
-        Bestscore = -constants.DEFAULT_BEST_SCORE
-        for move in game.available_moves(constants.PLAYER2):
-            dest_x_axis, dest_y_axis = move
-            player_x_axis, player_y_axis = game.getplayer(constants.PLAYER2)
-            game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, constants.PLAYER2)
-            score = MiniMax(game, depth + 1, False)
-            game.board[player_x_axis][player_y_axis] = constants.PLAYER2
-            game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
-            Bestscore = max(score, Bestscore)
-            if Bestscore == constants.WINNING_SCORE:
-                break
-        return Bestscore
-    else:
-        Bestscore = constants.DEFAULT_BEST_SCORE
-        for move in game.available_moves(constants.PLAYER1):
-            dest_x_axis, dest_y_axis = move
-            player_x_axis, player_y_axis = game.getplayer(constants.PLAYER1)
-            game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, constants.PLAYER1)
-            score = MiniMax(game, depth + 1, True)
-            game.board[player_x_axis][player_y_axis] = constants.PLAYER1
-            game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
-            Bestscore = min(score, Bestscore)
-            if Bestscore == -constants.WINNING_SCORE:
-                break
-        return Bestscore
+        current_player = constants.PLAYER2
+        best_score = -constants.DEFAULT_BEST_SCORE
+        winning_score = constants.WINNING_SCORE
+
+    for move in game.available_moves(current_player):
+        dest_x_axis, dest_y_axis = move
+        player_x_axis, player_y_axis = game.getplayer(current_player)
+        game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, current_player)
+        score = MiniMax(game, depth + 1, not is_maximizing)
+        game.board[player_x_axis][player_y_axis] = current_player
+        game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
+        best_score = get_best_score(score, best_score)
+
+        if best_score == winning_score:
+            break
+        
+    return best_score
 
 def draw_winner_on_screen(game, screen):
         GAME_FONT = pygame.freetype.SysFont("Arial", 50)
