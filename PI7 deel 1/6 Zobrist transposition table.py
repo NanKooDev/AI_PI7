@@ -1,6 +1,7 @@
 import pygame
 import pygame.freetype
 import constants
+import random
 
 class Game():
     def __init__(self):
@@ -12,6 +13,15 @@ class Game():
         self.turn = 1
         self.winner = 0
         self.moves = 0
+        self.zobrist_keys = [[[0 for piece in range(3)] for y_axis in range(constants.COLS)] for x_axis in range(constants.ROWS)] #The 3 stands for the 3 possible pieces: player 1, player 2, destroyed
+        self.initialize_zobrist_keys()
+        
+    def initialize_zobrist_keys(self):
+        random.seed(constants.SEED)
+        for x_axis in range(constants.ROWS):
+            for y_axis in range(constants.COLS):
+                for piece in range(3):
+                    self.zobrist_keys[x_axis][y_axis][piece] = random.randint(0, 2**64 - 1)
         
     def is_move_valid(self, player_x_axis, player_y_axis, dest_x_axis, dest_y_axis):  #TODO change I and J to x_axis and y_axis
         """
@@ -259,29 +269,129 @@ def draw_screen(game, screen):
     # flip() the display to put your work on screen
     pygame.display.flip()
 
-def ai_move(game):
-    bestScore = -constants.DEFAULT_BEST_SCORE
-    bestmove = (0, 0)
-    
-    #make the AI move
-    player_x_axis, player_y_axis = game.getplayer()
-    for move in game.available_moves():
-        
-        dest_x_axis, dest_y_axis = move
-        player_x_axis, player_y_axis = game.getplayer(constants.PLAYER2)
-        game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, constants.PLAYER2)
-        
-        score = MiniMax(game, 0, -constants.DEFAULT_BEST_SCORE, constants.DEFAULT_BEST_SCORE, False)
-        if score > bestScore:
-            bestScore = score
-            bestmove = move
-        game.board[player_x_axis][player_y_axis] = constants.PLAYER2
-        game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
-        if bestScore == constants.WINNING_SCORE:
-            break
-        
-    game.move(player_x_axis, player_y_axis, bestmove[0], bestmove[1])
+#make a transition table to store the best moves for the current player
+def zobrist_hash(game: Game):
+    """
+    Get the Zobrist hash for the current game state.
 
+    Returns:
+    - int: The Zobrist hash for the current game state
+    """
+    hash = 0
+    for x_axis in range(constants.ROWS):
+        for y_axis in range(constants.COLS):
+            piece = game.board[x_axis][y_axis]
+            if piece != constants.EMPTY:
+                hash ^= game.zobrist_keys[x_axis][y_axis][piece - 1] #piece - 1 because the pieces are 1, 2 and 3, but the zobrist_keys are 0, 1 and 2
+    
+    print("Zobrist hash:", hash)
+    print("current board state:", game.board)
+    print("current player:", game.turn)
+        
+    return hash
+
+#make a function to check if the current board state is in the transition table
+def is_in_transition_table(game: Game, transition_table: dict):
+    """
+    Check if the current game state is in the transition table.
+
+    Returns:
+    - bool: True if the current game state is in the transition table, False otherwise
+    """
+    is_in_transition_table = zobrist_hash(game) in transition_table
+    print("Is in transition table:", is_in_transition_table)
+    return is_in_transition_table
+
+#make a function to get the best move from the transition table
+def get_best_move_from_transition_table(game: Game, transition_table: dict):
+    """
+    Get the best move for the current game state from the transition table.
+
+    Returns:
+    - tuple: The best move for the current game state
+    """
+    print("Retrieved", zobrist_hash(game), ":", transition_table[zobrist_hash(game)])
+    return transition_table[zobrist_hash(game)]
+
+#make a function to store the best move in the transition table
+def store_best_move_in_transition_table(game: Game, best_move: tuple, transition_table: dict):
+    """
+    Store the best move for the current game state in the transition table.
+
+    Returns:
+    - dict: The updated transition table
+    """
+    transition_table[zobrist_hash(game)] = best_move
+    print("Transition table updated")
+    print("Added", zobrist_hash(game), ":", best_move)    
+    print(transition_table)
+    return transition_table
+
+#get transition table from file
+def get_transition_table_from_file():
+    """
+    Get the transition table from a file.
+
+    Returns:
+    - dict: The transition table
+    """
+    try:
+        with open("transition_table.txt", "r") as file:
+            transition_table = eval(file.read())
+            print("Transition table retrieved from file")
+            return transition_table
+    except FileNotFoundError:
+        print("Transition table file not found")
+        return {}
+    
+#store transition table in file
+def store_transition_table_in_file(transition_table: dict):
+    """
+    Store the transition table in a file.
+
+    Returns:
+    - None
+    """
+    with open("transition_table.txt", "w") as file:
+        file.write(str(transition_table))
+        print("Transition table stored in file")
+
+
+def ai_move(game, transition_table):
+    
+    if is_in_transition_table(game, transition_table):
+        best_move = get_best_move_from_transition_table(game, transition_table)
+        player_x_axis, player_y_axis = game.getplayer()
+        game.move(player_x_axis, player_y_axis, best_move[0], best_move[1])
+        return
+    else:
+    
+        bestScore = -constants.DEFAULT_BEST_SCORE
+        bestmove = (0, 0)
+        
+        #make the AI move
+        player_x_axis, player_y_axis = game.getplayer()
+        for move in game.available_moves():
+            
+            dest_x_axis, dest_y_axis = move
+            player_x_axis, player_y_axis = game.getplayer(constants.PLAYER2)
+            game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, constants.PLAYER2)
+            
+            score = MiniMax(game, 0, -constants.DEFAULT_BEST_SCORE, constants.DEFAULT_BEST_SCORE, False)
+            if score > bestScore:
+                bestScore = score
+                bestmove = move
+            game.board[player_x_axis][player_y_axis] = constants.PLAYER2
+            game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
+            if bestScore == constants.WINNING_SCORE:
+                break
+            
+        #store the best move in the transition table
+        transition_table = store_best_move_in_transition_table(game, bestmove, transition_table)
+        game.move(player_x_axis, player_y_axis, bestmove[0], bestmove[1])
+
+#initialize the transition table
+transition_table = get_transition_table_from_file()
 
 pygame.init()
 pygame.display.set_caption("Isolation Game")
@@ -296,9 +406,8 @@ game.board[5][5] = constants.PLAYER2
 
 
 while running:
-    
     if game.turn == constants.PLAYER2:
-        ai_move(game) #needs to be async with protection against multiple calls
+        ai_move(game, transition_table) #needs to be async with protection against multiple calls
 
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
@@ -320,6 +429,8 @@ while running:
         running = False
 
     clock.tick(constants.FPS)  # limits FPS to 60
+
+store_transition_table_in_file(transition_table)
 
 #sleep for 3 seconds before quitting
 pygame.time.wait(3000)
