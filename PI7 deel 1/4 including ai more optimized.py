@@ -229,6 +229,8 @@ def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
             game.board[player_x_axis][player_y_axis] = constants.PLAYER2
             game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
             Bestscore = max(score, Bestscore)
+            if Bestscore == constants.WINNING_SCORE:
+                break
         return Bestscore
     else:
         Bestscore = constants.DEFAULT_BEST_SCORE
@@ -240,6 +242,8 @@ def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
             game.board[player_x_axis][player_y_axis] = constants.PLAYER1
             game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
             Bestscore = min(score, Bestscore)
+            if Bestscore == -constants.WINNING_SCORE:
+                break
         return Bestscore
 
 def draw_winner_on_screen(game, screen):
@@ -276,6 +280,8 @@ def ai_move(game):
             bestmove = move
         game.board[player_x_axis][player_y_axis] = constants.PLAYER2
         game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
+        if bestScore == constants.WINNING_SCORE:
+            break
         
     game.move(player_x_axis, player_y_axis, bestmove[0], bestmove[1])
 
