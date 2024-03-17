@@ -208,7 +208,7 @@ class Game():
 
 #takes a game object and returns the best move for the current player
 
-def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
+def MiniMax(game: Game, depth: int, alfa: int, beta: int, is_maximizing: bool) -> int:
     if game.is_game_over(constants.PLAYER2):
         return -constants.WINNING_SCORE
     elif game.is_game_over(constants.PLAYER1):
@@ -231,13 +231,18 @@ def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
         dest_x_axis, dest_y_axis = move
         player_x_axis, player_y_axis = game.getplayer(current_player)
         game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, current_player)
-        score = MiniMax(game, depth + 1, not is_maximizing)
+        score = MiniMax(game, depth + 1, alfa, beta, not is_maximizing)
         game.board[player_x_axis][player_y_axis] = current_player
         game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
         best_score = get_best_score(score, best_score)
 
-        if best_score == winning_score:
+  
+        if best_score == winning_score or (is_maximizing and best_score > beta) or (not is_maximizing and best_score < alfa):
             break
+        if is_maximizing:
+            alfa = max(best_score, alfa)
+        else:
+            beta = min(best_score, beta)
         
     return best_score
 
@@ -269,7 +274,7 @@ def ai_move(game):
         player_x_axis, player_y_axis = game.getplayer(constants.PLAYER2)
         game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, constants.PLAYER2)
         
-        score = MiniMax(game, 0, False)
+        score = MiniMax(game, 0, -constants.DEFAULT_BEST_SCORE , constants.DEFAULT_BEST_SCORE , False)
         if score > bestScore:
             bestScore = score
             bestmove = move
