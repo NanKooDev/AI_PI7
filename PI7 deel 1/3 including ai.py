@@ -59,6 +59,7 @@ class Game():
         - player_col (int): y-coordinate of the current player's position
         - dest_row (int): row-coordinate of the destination position
         - dest_col (int): y-coordinate of the destination position
+        - simulate_player (int): The player to simulate the move for
 
         Returns:
         - bool: True if the move is successful, False otherwise
