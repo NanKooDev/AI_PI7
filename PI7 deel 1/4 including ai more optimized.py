@@ -142,7 +142,7 @@ class Game():
                     moves.append((dest_x_axis, dest_y_axis))
         return moves
 
-    def drawboard(self):
+    def drawboard(self, screen):
         """
         Draw the game board on the screen.
         """
@@ -252,7 +252,7 @@ def draw_screen(game, screen):
     screen.fill("purple")
 
     # RENDER YOUR GAME HERE
-    game.drawboard()
+    game.drawboard(screen)
     
     # flip() the display to put your work on screen
     pygame.display.flip()
