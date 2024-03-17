@@ -215,7 +215,7 @@ def MiniMax(game: Game, depth: int, is_maximizing: bool) -> int:
         return constants.WINNING_SCORE
         
     #if depth is max_depth, check the possible amount of moves for the current player
-    if depth == constants.MAX_DEPTH:
+    if depth >= game.moves/2.5+1: #constants.MAX_DEPTH:
             return len(game.available_moves(constants.PLAYER2)) - len(game.available_moves(constants.PLAYER1))
         
         
