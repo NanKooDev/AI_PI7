@@ -16,14 +16,23 @@ class Game():
         self.zobrist_keys = [[[0 for piece in range(3)] for y_axis in range(constants.COLS)] for x_axis in range(constants.ROWS)] #The 3 stands for the 3 possible pieces: player 1, player 2, destroyed
         self.initialize_zobrist_keys()
         
-    def initialize_zobrist_keys(self):
+    def initialize_zobrist_keys(self) -> None:
+        """
+        Initialize the Zobrist keys for the game board.
+        
+        parameters:
+        - None
+        
+        returns:
+        - None
+        """
         random.seed(constants.SEED)
         for x_axis in range(constants.ROWS):
             for y_axis in range(constants.COLS):
                 for piece in range(3):
                     self.zobrist_keys[x_axis][y_axis][piece] = random.randint(0, 2**64 - 1)
         
-    def is_move_valid(self, player_x_axis, player_y_axis, dest_x_axis, dest_y_axis):  #TODO change I and J to x_axis and y_axis
+    def is_move_valid(self, player_x_axis, player_y_axis, dest_x_axis, dest_y_axis) -> bool:
         """
         Check if a move is valid.
 
@@ -60,7 +69,7 @@ class Game():
         
         return True
     
-    def move(self, player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, simulate_player: int=None):
+    def move(self, player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, simulate_player: int=None) -> bool:
         """
         Move the current player to the destination position.
         Also switches the turn to the other player. and increments the moves.
@@ -90,16 +99,18 @@ class Game():
         else:
             return False
         
-    def getplayer(self, player=None): #TODO change I and J to x_axis and y_axis
+    def getplayer(self, player=None) -> tuple:
         """
         Get the current player's position.
+        If player is specified, return the position of the specified player instead.
+
+
+        Parameters:
+        - player (int): The player to get the position for
 
         Returns:
-        - tuple: (x_axis, y) coordinates of the current player's position
-        """
-        #return x_axis,y of current player in the grid based on the turn
-        
-        #if player is specified, return the position of the specified player
+        - tuple: (x_axis, y_axis) coordinates of the current player's position
+        """        
         if player:
             for x_axis in range(constants.ROWS):
                 for y_axis in range(constants.COLS):
@@ -111,9 +122,12 @@ class Game():
                     if self.board[x_axis][y_axis] == self.turn:
                         return x_axis, y_axis
                 
-    def is_game_over(self, active_player: int=None):
+    def is_game_over(self, active_player: int=None) -> bool:
         """
         Check if the game is over.
+        
+        parameters:
+        - active_player (int): The player to check if the game is over for
 
         Returns:
         - bool: True if the game is over, False otherwise
@@ -133,15 +147,17 @@ class Game():
         
         return False
 
-    def available_moves(self, player=None):
+    def available_moves(self, player=None) -> list:
         """
         Get a list of available moves for the current player.
+        If player is specified, return a list of available moves for the specified player instead.
+        
+        parameters:
+        - player (int): The player to get the available moves for
 
         Returns:
         - list: List of available moves as tuples (x_axis, y_axis)
         """
-        #return a list of available moves for the current player
-        #if player is specified, return a list of available moves for the specified player
         if player:
             player_x_axis, player_y_axis = self.getplayer(player)
         else:
@@ -153,9 +169,15 @@ class Game():
                     moves.append((dest_x_axis, dest_y_axis))
         return moves
 
-    def drawboard(self, screen):
+    def drawboard(self, screen) -> None:
         """
         Draw the game board on the screen.
+        
+        parameters:
+        - screen (pygame.Surface): The screen to draw on
+        
+        Returns:
+        - None
         """
         #draw grid and alternates colors
         for x_axis in range(constants.ROWS):
@@ -169,8 +191,6 @@ class Game():
         for x_axis in range(constants.ROWS):
             for y_axis in range(constants.COLS):
                 if self.board[x_axis][y_axis] == constants.PLAYER1:
-                    #pygame.draw.rect(screen, constants.RED, (x_axis * 100, y_axis * 100, 100, 100))
-                    
                     #draw chess-queen.svg on player 1
                     queen = pygame.image.load(constants.QUEEN)
                     #resize image to cover the entire tile
@@ -183,8 +203,6 @@ class Game():
                     screen.blit(queen, (x_axis * constants.SQUARE_SIZE, y_axis * constants.SQUARE_SIZE))
                     
                 elif self.board[x_axis][y_axis] == constants.PLAYER2:
-                    # pygame.draw.rect(screen, constants.BLUE, (x_axis * 100, y_axis * 100, 100, 100))
-                    
                     #draw chess-queen.svg on player 2
                     queen = pygame.image.load(constants.QUEEN)
                     #resize image to cover the entire tile
@@ -204,11 +222,6 @@ class Game():
                     pygame.draw.line(screen, constants.RED, (x_axis * constants.SQUARE_SIZE, y_axis * constants.SQUARE_SIZE), (x_axis * constants.SQUARE_SIZE + constants.SQUARE_SIZE, y_axis * constants.SQUARE_SIZE + constants.SQUARE_SIZE), 5)
                     pygame.draw.line(screen, constants.RED, (x_axis * constants.SQUARE_SIZE + constants.SQUARE_SIZE, y_axis * constants.SQUARE_SIZE), (x_axis * constants.SQUARE_SIZE, y_axis * constants.SQUARE_SIZE + constants.SQUARE_SIZE), 5)
                     
-                    
-        #draws circle over active player
-        # player_x_axis, player_y_axis = self.getplayer()
-        # pygame.draw.circle(screen, constants.WHITE, (player_x_axis * 100 + 50, player_y_axis * 100 + 50), 40, 5)
-        
         #draws available moves for the current player with a semi-transparent green color
         for move in self.available_moves():
             dest_x_axis, dest_y_axis = move
@@ -217,23 +230,39 @@ class Game():
             else:
                 pygame.draw.rect(screen, constants.SEMI_GREEN_GRAY, (dest_x_axis * constants.SQUARE_SIZE, dest_y_axis * constants.SQUARE_SIZE, constants.SQUARE_SIZE, constants.SQUARE_SIZE))
 
-#takes a game object and returns the best move for the current player
 
 def MiniMax(game: Game, depth: int, alfa: int, beta: int, is_maximizing: bool) -> int:
-    if game.is_game_over(constants.PLAYER2):
+    """
+    The MiniMax algorithm.
+    parameters:
+    - game (Game): The game state to evaluate
+    - depth (int): The current depth of the search
+    - alfa (int): The current best score for the maximizing player
+    - beta (int): The current best score for the minimizing player
+    - is_maximizing (bool): True if the current player is the maximizing player, False otherwise
+    
+    Returns:
+    - int: The best score for the current game state
+    """
+    
+    #set ai_player to constants.PLAYER2 if game.turn is constants.PLAYER2, else set to constants.PLAYER1
+    ai_player = constants.PLAYER2 if game.turn == constants.PLAYER2 else constants.PLAYER1
+    other_player = constants.PLAYER1 if game.turn == constants.PLAYER2 else constants.PLAYER2
+    
+    if game.is_game_over(ai_player):
         return -constants.WINNING_SCORE
-    elif game.is_game_over(constants.PLAYER1):
+    elif game.is_game_over(other_player):
         return constants.WINNING_SCORE
         
     #if depth is max_depth, check the possible amount of moves for the current player
-    if depth >= (pow(game.moves,1.6)/17)+1: #constants.MAX_DEPTH: https://www.desmos.com/calculator/bijlk0fzbv
-            return len(game.available_moves(constants.PLAYER2)) - len(game.available_moves(constants.PLAYER1))
+    if depth  == constants.MAX_DEPTH: # old algorithm can be found at: https://www.desmos.com/calculator/bijlk0fzbv
+        return len(game.available_moves(ai_player)) - len(game.available_moves(other_player))
         
-    current_player = constants.PLAYER1
+    current_player = other_player
     best_score = constants.DEFAULT_BEST_SCORE
     get_best_score = max if is_maximizing else min #uses the max function if is_maximizing is True, else uses the min function
     if is_maximizing:
-        current_player = constants.PLAYER2
+        current_player = ai_player
         best_score = -constants.DEFAULT_BEST_SCORE
 
     for move in game.available_moves(current_player):
@@ -254,26 +283,49 @@ def MiniMax(game: Game, depth: int, alfa: int, beta: int, is_maximizing: bool) -
         
     return best_score
 
-def draw_winner_on_screen(game, screen):
-        GAME_FONT = pygame.freetype.SysFont("Arial", 50)
-        text_surface, rect = GAME_FONT.render(f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
-        GAME_FONT.render_to(screen, (constants.WIDTH//2 - rect.width//2, constants.HEIGHT//2 - rect.height//2), f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
-        pygame.display.flip()
+def draw_winner_on_screen(game, screen) -> None:
+    """
+    Draw the winner on the screen.
+    
+    Parameters:
+    - game (Game): The game state
+    - screen (pygame.Surface): The screen to draw on
+    
+    Returns:
+    - None
+    """    
+    GAME_FONT = pygame.freetype.SysFont("Arial", 50)
+    text_surface, rect = GAME_FONT.render(f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
+    GAME_FONT.render_to(screen, (constants.WIDTH//2 - rect.width//2, constants.HEIGHT//2 - rect.height//2), f"Black wins!" if game.winner == constants.PLAYER1 else "White wins!", constants.WHITE)
+    pygame.display.flip()
                 
-def draw_screen(game, screen):
+def draw_screen(game, screen) -> None:
+    """
+    Draw the game screen.
+    
+    Parameters:
+    - game (Game): The game state
+    - screen (pygame.Surface): The screen to draw on
+    
+    Returns:
+    - None
+    """
+
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("purple")
 
-    # RENDER YOUR GAME HERE
+    # renders game board
     game.drawboard(screen)
     
     # flip() the display to put your work on screen
     pygame.display.flip()
 
-#make a transition table to store the best moves for the current player
-def zobrist_hash(game: Game):
+def zobrist_hash(game: Game) -> int:
     """
     Get the Zobrist hash for the current game state.
+    
+    parameters:
+    - game (Game): The game state
 
     Returns:
     - int: The Zobrist hash for the current game state
@@ -285,51 +337,61 @@ def zobrist_hash(game: Game):
             if piece != constants.EMPTY:
                 hash ^= game.zobrist_keys[x_axis][y_axis][piece - 1] #piece - 1 because the pieces are 1, 2 and 3, but the zobrist_keys are 0, 1 and 2
     
-    print("Zobrist hash:", hash)
-    print("current board state:", game.board)
-    print("current player:", game.turn)
+    # print("Zobrist hash:", hash)
+    # print("current board state:", game.board)
+    # print("current player:", game.turn)
         
     return hash
 
-#make a function to check if the current board state is in the transition table
-def is_in_transition_table(game: Game, transition_table: dict):
+def is_in_transition_table(game: Game, transition_table: dict) -> bool:
     """
     Check if the current game state is in the transition table.
+    
+    parameters:
+    - game (Game): The game state
+    - transition_table (dict): The transition table
 
     Returns:
     - bool: True if the current game state is in the transition table, False otherwise
     """
     is_in_transition_table = zobrist_hash(game) in transition_table
-    print("Is in transition table:", is_in_transition_table)
+    # print("Is in transition table:", is_in_transition_table)
     return is_in_transition_table
 
-#make a function to get the best move from the transition table
-def get_best_move_from_transition_table(game: Game, transition_table: dict):
+def get_best_move_from_transition_table(game: Game, transition_table: dict) -> tuple:
     """
     Get the best move for the current game state from the transition table.
+    
+    parameters:
+    - game (Game): The game state
+    - transition_table (dict): The transition table
 
     Returns:
     - tuple: The best move for the current game state
     """
-    print("Retrieved", zobrist_hash(game), ":", transition_table[zobrist_hash(game)])
+    #print("Retrieved", zobrist_hash(game), ":", transition_table[zobrist_hash(game)])
     return transition_table[zobrist_hash(game)]
 
 #make a function to store the best move in the transition table
-def store_best_move_in_transition_table(game: Game, best_move: tuple, transition_table: dict):
+def store_best_move_in_transition_table(game: Game, best_move: tuple, transition_table: dict) -> dict:
     """
     Store the best move for the current game state in the transition table.
+    
+    parameters:
+    - game (Game): The game state
+    - best_move (tuple): The best move for the current game state
+    - transition_table (dict): The transition table
 
     Returns:
     - dict: The updated transition table
     """
     transition_table[zobrist_hash(game)] = best_move
-    print("Transition table updated")
-    print("Added", zobrist_hash(game), ":", best_move)    
-    print(transition_table)
+    # print("Transition table updated")
+    # print("Added", zobrist_hash(game), ":", best_move)    
+    # print(transition_table)
     return transition_table
 
-#get transition table from file
-def get_transition_table_from_file():
+def get_transition_table_from_file() -> dict:
     """
     Get the transition table from a file.
 
@@ -345,8 +407,7 @@ def get_transition_table_from_file():
         print("Transition table file not found")
         return {}
     
-#store transition table in file
-def store_transition_table_in_file(transition_table: dict):
+def store_transition_table_in_file(transition_table: dict) -> None:
     """
     Store the transition table in a file.
 
@@ -358,8 +419,18 @@ def store_transition_table_in_file(transition_table: dict):
         print("Transition table stored in file")
 
 
-def ai_move(game, transition_table):
+def ai_move(game, transition_table, ai_player: int=constants.PLAYER2) -> None: #Should be reworked to use current player instead of constants.PLAYER2
+    """
+    Make the AI move.
     
+    parameters:
+    - game (Game): The game state
+    - transition_table (dict): The transition table
+    - ai_player (int): The AI player
+    
+    Returns:
+    - None
+    """    
     if is_in_transition_table(game, transition_table):
         best_move = get_best_move_from_transition_table(game, transition_table)
         player_x_axis, player_y_axis = game.getplayer()
@@ -372,14 +443,14 @@ def ai_move(game, transition_table):
     #make the AI move
     for move in game.available_moves():
         dest_x_axis, dest_y_axis = move
-        player_x_axis, player_y_axis = game.getplayer(constants.PLAYER2)
-        game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, constants.PLAYER2)
+        player_x_axis, player_y_axis = game.getplayer()
+        game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, ai_player)
         
         score = MiniMax(game, 0, -constants.DEFAULT_BEST_SCORE, constants.DEFAULT_BEST_SCORE, False)
         if score > bestScore:
             bestScore = score
             bestmove = move
-        game.board[player_x_axis][player_y_axis] = constants.PLAYER2
+        game.board[player_x_axis][player_y_axis] = ai_player
         game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
         if bestScore == constants.WINNING_SCORE:
             break
@@ -405,7 +476,7 @@ game.board[5][5] = constants.PLAYER2
 
 while running:
     if game.turn == constants.PLAYER2:
-        ai_move(game, transition_table) #needs to be async with protection against multiple calls
+        ai_move(game, transition_table, game.turn)
 
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
