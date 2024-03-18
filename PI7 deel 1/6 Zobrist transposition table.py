@@ -365,31 +365,28 @@ def ai_move(game, transition_table):
         player_x_axis, player_y_axis = game.getplayer()
         game.move(player_x_axis, player_y_axis, best_move[0], best_move[1])
         return
-    else:
     
-        bestScore = -constants.DEFAULT_BEST_SCORE
-        bestmove = (0, 0)
+    bestScore = -constants.DEFAULT_BEST_SCORE
+    bestmove = (0, 0)
+    
+    #make the AI move
+    for move in game.available_moves():
+        dest_x_axis, dest_y_axis = move
+        player_x_axis, player_y_axis = game.getplayer(constants.PLAYER2)
+        game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, constants.PLAYER2)
         
-        #make the AI move
-        player_x_axis, player_y_axis = game.getplayer()
-        for move in game.available_moves():
-            
-            dest_x_axis, dest_y_axis = move
-            player_x_axis, player_y_axis = game.getplayer(constants.PLAYER2)
-            game.move(player_x_axis, player_y_axis, dest_x_axis, dest_y_axis, constants.PLAYER2)
-            
-            score = MiniMax(game, 0, -constants.DEFAULT_BEST_SCORE, constants.DEFAULT_BEST_SCORE, False)
-            if score > bestScore:
-                bestScore = score
-                bestmove = move
-            game.board[player_x_axis][player_y_axis] = constants.PLAYER2
-            game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
-            if bestScore == constants.WINNING_SCORE:
-                break
-            
-        #store the best move in the transition table
-        transition_table = store_best_move_in_transition_table(game, bestmove, transition_table)
-        game.move(player_x_axis, player_y_axis, bestmove[0], bestmove[1])
+        score = MiniMax(game, 0, -constants.DEFAULT_BEST_SCORE, constants.DEFAULT_BEST_SCORE, False)
+        if score > bestScore:
+            bestScore = score
+            bestmove = move
+        game.board[player_x_axis][player_y_axis] = constants.PLAYER2
+        game.board[dest_x_axis][dest_y_axis] = constants.EMPTY
+        if bestScore == constants.WINNING_SCORE:
+            break
+        
+    #store the best move in the transition table
+    transition_table = store_best_move_in_transition_table(game, bestmove, transition_table)
+    game.move(player_x_axis, player_y_axis, bestmove[0], bestmove[1])
 
 #initialize the transition table
 transition_table = get_transition_table_from_file()
