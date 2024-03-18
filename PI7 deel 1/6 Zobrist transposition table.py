@@ -138,7 +138,7 @@ class Game():
         Get a list of available moves for the current player.
 
         Returns:
-        - list: List of available moves as tuples (x_axis, y)
+        - list: List of available moves as tuples (x_axis, y_axis)
         """
         #return a list of available moves for the current player
         #if player is specified, return a list of available moves for the specified player
