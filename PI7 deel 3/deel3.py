@@ -235,23 +235,6 @@ def main() -> None:
     
     print("The freq results are: ", sorted(freq_results.items(), key=lambda x: x[1], reverse=True))
     print("The prob results are: ", sorted(prob_results.items(), key=lambda x: x[1], reverse=True))
-    
-    
-    
-    
-    # #print("Version A")
-    # #start_time = time.time()
-    # calculate(user_input)
-    # #print("Time: %s seconds" % (time.time() - start_time))
-    
-    # print("=====================================")
-    
-    # #print("Version B")
-    # #start_time = time.time()
-    # print(detect_language(user_input))
-    # #print("Time: %s seconds" % (time.time() - start_time))
-
-    # print("\n")
 
 def check_language_files() -> None:
     """Check if all raw language files have been processed and process them if necessary.
