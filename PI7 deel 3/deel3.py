@@ -171,7 +171,7 @@ def get_results_using_probability(user_trigrams: dict) -> dict:
     """Get the results of the analysis of the text.
     
     Args:
-        trigrams (dict): The trigrams of the text.
+        user_trigrams (dict): The trigrams of the text.
         
     Returns:
         dict: A dictionary with the results of the analysis.
