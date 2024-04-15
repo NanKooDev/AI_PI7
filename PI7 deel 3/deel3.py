@@ -6,6 +6,7 @@ corpus_directory = "PI7 deel 3/corpus/"
 raw_directory = corpus_directory + "raw/"
 processed_directory = corpus_directory + "processed/"
 
+
 def process_file(language : str) -> None:
     """Process a raw language file and save the processed data to a new file.
 
@@ -16,15 +17,15 @@ def process_file(language : str) -> None:
         None
     """
     
-    #open file and read text
-    file = open(raw_directory + language, "r", encoding="utf-8")
-    text = file.read()
-    file.close()
+    #open raw file and read string
+    raw_file = open(raw_directory + language, "r", encoding="utf-8")
+    string = raw_file.read()
+    raw_file.close()
     
-    #normalize text and create bigrams and trigrams
-    processed_text = normalize_string(text)
-    bigrams = make_ngrams(processed_text, 2)
-    trigrams = make_ngrams(processed_text, 3)
+    #normalize string and create bigrams and trigrams
+    string = normalize_string(string)
+    bigrams = make_ngrams(string, 2)
+    trigrams = make_ngrams(string, 3)
     
     #create json file with bigrams and trigrams
     processed_file = open(processed_directory + language.split(".")[0] + ".json", "w", encoding="utf-8")
@@ -33,58 +34,63 @@ def process_file(language : str) -> None:
         
     return
         
-def normalize_string(text: str) -> str:
+def normalize_string(string: str) -> str:
     """Normalize a string by removing all non-alphabetic characters and converting all characters to lowercase.
 
     Args:
-        text (str): The string to normalize.
+        string (str): The string to normalize.
 
     Returns:
         str: The normalized string.
     """
     
     # Remove all non-alphabetic characters
-    text = ''.join([char for char in text if char.isalpha() or char.isspace()])
+    string = ''.join([char for char in string if char.isalpha() or char.isspace()])
+    
     # Convert all characters to lowercase
-    text = text.lower()
-    return text
+    string = string.lower()
+    
+    return string
 
-def make_ngrams(text: str, n: int) -> dict:
-    """Create n-grams from a given text.
+def make_ngrams(string: str, n: int) -> dict:
+    """Create n-grams from a given string.
 
     Args:
-        text (str): The text to create n-grams from.
+        string (str): The string to create n-grams from.
         n (int): The size of the n-grams.
 
     Returns:
         dict: A dict of n-grams and their frequencies.
     """
+    
     ngrams = {}
-    for i in range(len(text) - n + 1):
-        ngram = text[i:i+n]
+    for i in range(len(string) - n + 1): # Loop over the string from 0 to len(string) - n + 1. We need to subtract n because we need to have n characters left to create a ngram
+        ngram = string[i:i+n] # Get the ngram by slicing the string from i to i+n where n is the size of the ngram
         if ngram in ngrams:
             ngrams[ngram] += 1
         else:
             ngrams[ngram] = 1
+            
     return ngrams
 
-def get_normalized_corpus() -> str:
-    """Get the normalized corpus.
+def get_normalized_corpora() -> str:
+    """Get the normalized corpora.
     
     Returns:
-        str: The normalized corpus.
+        str: The normalized corpora.
     """
-    corpus_text = ""
     
-    for language in languages.keys():
-        raw_file = open(processed_directory + languages[language], "r", encoding="utf-8")
-        corpus_text += raw_file.read()
+    corpora_string = ""
+    
+    for language in languages:
+        raw_file = open(raw_directory + language + ".txt", "r", encoding="utf-8")
+        corpora_string += raw_file.read()
         raw_file.close()
         
-    return normalize_string(corpus_text)
+    return normalize_string(corpora_string)
 
 def probability_of_ngram(ngram: str, corpus_ngrams: dict) -> float:
-    """Calculate the probability of a ngram in the corpus.
+    """Calculate the probability of an ngram in the corpus.
 
     Args:
         ngram (str): The ngram to calculate the probability of.
@@ -93,18 +99,14 @@ def probability_of_ngram(ngram: str, corpus_ngrams: dict) -> float:
     Returns:
         float: The probability of the ngram in the corpus.
     """
-    #ngram_count = 0.0000000001
-    """if ngram in corpus_ngrams:
-        ngram_count = corpus_ngrams[ngram]
     
-    # P(ngram) = count(ngram) / sum(all ngrams)
-    return ngram_count / sum(corpus_ngrams.values())"""
+    ngram_count = corpus_ngrams.get(ngram, 0) + 1 # Add 1 to the count of the ngram to prevent division by zero, use .get() to return 0 if the ngram is not in the corpus
     
-    ngram_count = corpus_ngrams.get(ngram, 0) + 1
-    total_ngrams = sum(corpus_ngrams.values()) + 1 * len(corpus_ngrams)
+    total_ngrams = (sum(corpus_ngrams.values()) + 1) * len(corpus_ngrams) # Add 1 to the total ngrams to prevent division by zero and multiply by the number of ngrams to prevent the probability from being 1
+    
+    # P(ngram) = count(ngram) / total ngrams
     return ngram_count / total_ngrams
     
-
 def probability_of_language(language_trigrams: dict, corpus_trigrams: dict) -> float:
     """Calculate the probability of a language.
 
@@ -115,6 +117,7 @@ def probability_of_language(language_trigrams: dict, corpus_trigrams: dict) -> f
     Returns:
         float: The probability of the language.
     """
+    
     # P(language) = sum(all trigrams in language) / sum(all trigrams)
     return sum(language_trigrams.values()) / sum(corpus_trigrams.values())
 
@@ -129,13 +132,15 @@ def probability_of_string_given_language(product_of_trigram_chance: float, produ
     Returns:
         float: The probability of the string given the language.
     """
+    
+    # P(string|language) = P(trigram1) * P(trigram2) * ... * P(trigramN) / P(bigram1) * P(bigram2) * ... * P(bigramN) * P(language)
     return product_of_trigram_chance / product_of_bigram_chance * language_chance
 
-def get_results_using_frequency(user_trigrams: dict) -> dict:
-    """Get the results of the analysis of the text.
+def get_results_using_frequency(trigrams: dict) -> dict:
+    """Get the results of the analysis of the string.
     
     Args:
-        trigrams (dict): The trigrams of the text.
+        trigrams (dict): The trigrams of the string.
         
     Returns:
         dict: A dictionary with the results of the analysis.
@@ -143,14 +148,15 @@ def get_results_using_frequency(user_trigrams: dict) -> dict:
     
     results = {}
     
-    for language in languages.keys():
-        processed_data = read_ngrams_from_file(language)
+    for language in languages:
+        language_ngrams = read_ngrams_from_file(language)
         
         score = 0
                 
-        for trigram in user_trigrams.keys():
-            if trigram in processed_data["trigrams"]:
-                score += processed_data["trigrams"][trigram] / processed_data["bigrams"][trigram[:2]]
+        for trigram in trigrams:
+            if trigram in language_ngrams["trigrams"]:
+                bigram = trigram[:2]
+                score += language_ngrams["trigrams"][trigram] / language_ngrams["bigrams"][bigram]
         
         results[language] = score
 
@@ -173,39 +179,42 @@ def read_ngrams_from_file(language: str) -> dict:
     return ngrams
 
 def get_results_using_probability(user_trigrams: dict) -> dict:
-    """Get the results of the analysis of the text.
+    """Get the results of the analysis of the string.
     
     Args:
-        user_trigrams (dict): The trigrams of the text.
+        user_trigrams (dict): The trigrams of the string.
         
     Returns:
         dict: A dictionary with the results of the analysis.
     """
+    
     probabilities = {}
     
-    for language in languages.keys():
-        processed_data = read_ngrams_from_file(language)
+    corpora_trigrams = make_ngrams(get_normalized_corpora(), 3)
+    
+    for language in languages:
+        language_ngrams = read_ngrams_from_file(language)
         
-        product_of_trigrams = 1  # Reset product_of_trigrams for each language
-        product_of_bigrams = 1   # Reset product_of_bigrams for each language
-        
+        product_of_trigrams = 1
+        product_of_bigrams = 1
+
         for trigram in user_trigrams:
             for _ in range(user_trigrams[trigram]):
-                product_of_trigrams *= probability_of_ngram(trigram, processed_data["trigrams"])
-                product_of_bigrams *= probability_of_ngram(trigram[:2], processed_data["bigrams"])
+                product_of_trigrams *= probability_of_ngram(trigram, language_ngrams["trigrams"])
+                product_of_bigrams *= probability_of_ngram(trigram[:2], language_ngrams["bigrams"])
         
         probabilities[language] = probability_of_string_given_language(\
             product_of_trigrams,\
             product_of_bigrams,\
-            probability_of_language(processed_data["trigrams"], make_ngrams(corpus, 3)))
+            probability_of_language(language_ngrams["trigrams"], corpora_trigrams))
         
     return probabilities
 
-def get_probabilities_from_frequency(trigrams: dict) -> dict:
+def get_probabilities_per_key_from_frequency(trigrams: dict) -> dict:
     """Get the probabilities of the trigrams based on their frequency.
     
     Args:
-        trigrams (dict): The trigrams of the text.
+        trigrams (dict): The trigrams of the string.
         
     Returns:
         dict: A dictionary with the probabilities of the trigrams.
@@ -213,19 +222,25 @@ def get_probabilities_from_frequency(trigrams: dict) -> dict:
     
     probabilities = {}
     
-    for trigram in trigrams.keys():
+    for trigram in trigrams:
         probabilities[trigram] = trigrams[trigram] / sum(trigrams.values())
     
     return probabilities
 
 def main() -> None:
     """Main function of the program.
+    
+    Args:
+        None
+        
+    Returns:
+        None        
     """
     
-    user_input = input("Enter text to analyze: ")
-    user_input = normalize_string(user_input)
+    string = input("Enter string to analyze: ")
+    string = normalize_string(string)
     
-    trigrams = make_ngrams(user_input, 3)
+    trigrams = make_ngrams(string, 3)
     
     start_time = time.time()
     freq_results = get_results_using_frequency(trigrams)
@@ -234,13 +249,26 @@ def main() -> None:
     start_time = time.time()
     prob_results = get_results_using_probability(trigrams)
     print("prob Time: %s seconds" % (time.time() - start_time))
-        
     
-    print("The language detected using freq is: ", max(freq_results, key=freq_results.get))
-    print("The language detected using prob is: ", max(prob_results, key=prob_results.get))
+    freq_probability = get_probabilities_per_key_from_frequency(freq_results)
+    prob_probability = get_probabilities_per_key_from_frequency(prob_results)
+    
+    freq_probability = sorted(freq_probability.items(), key=lambda x: x[1], reverse=True)
+    prob_probability = sorted(prob_probability.items(), key=lambda x: x[1], reverse=True)
+    
+    
+    
+    print("The language detected using freq is:", max(freq_results, key=freq_results.get))
+    print("The language detected using prob is:", max(prob_results, key=prob_results.get))
     
     print("The freq results are: ", sorted(freq_results.items(), key=lambda x: x[1], reverse=True))
     print("The prob results are: ", sorted(prob_results.items(), key=lambda x: x[1], reverse=True))
+    
+    print("The freq probabilities are:", freq_probability)
+    print("The prob probabilities are:", prob_probability)
+
+    print("For the string: %s" % string)
+    print("My prediction is that the language is: %s. I am %.2f%% confident of this." % (prob_probability[0][0], prob_probability[0][1] * 100))
 
 def check_language_files() -> None:
     """Check if all raw language files have been processed and process them if necessary.
@@ -271,12 +299,12 @@ def get_languages() -> dict:
     Returns:
         dict: A dictionary with the languages as keys and the full file names as values.
     """
+    
     check_language_files()
     
     return {file.split(".")[0]: file for file in os.listdir(processed_directory) if file.endswith(".json")} 
 
 languages = get_languages()
-corpus = get_normalized_corpus()
 
 while True:
     main()
