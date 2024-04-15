@@ -93,12 +93,17 @@ def probability_of_ngram(ngram: str, corpus_ngrams: dict) -> float:
     Returns:
         float: The probability of the ngram in the corpus.
     """
-    ngram_count = 0.0000000001
-    if ngram in corpus_ngrams:
+    #ngram_count = 0.0000000001
+    """if ngram in corpus_ngrams:
         ngram_count = corpus_ngrams[ngram]
     
     # P(ngram) = count(ngram) / sum(all ngrams)
-    return ngram_count / sum(corpus_ngrams.values())
+    return ngram_count / sum(corpus_ngrams.values())"""
+    
+    ngram_count = corpus_ngrams.get(ngram, 0) + 1
+    total_ngrams = sum(corpus_ngrams.values()) + 1 * len(corpus_ngrams)
+    return ngram_count / total_ngrams
+    
 
 def probability_of_language(language_trigrams: dict, corpus_trigrams: dict) -> float:
     """Calculate the probability of a language.
@@ -178,15 +183,16 @@ def get_results_using_probability(user_trigrams: dict) -> dict:
     """
     probabilities = {}
     
-    product_of_trigrams = 1
-    product_of_bigrams = 1
-    for trigram in user_trigrams:
-        for _ in range(user_trigrams[trigram]):
-            product_of_trigrams *= probability_of_ngram(trigram, make_ngrams(corpus, 3))
-            product_of_bigrams *= probability_of_ngram(trigram[:2], make_ngrams(corpus, 2))
-        
     for language in languages.keys():
         processed_data = read_ngrams_from_file(language)
+        
+        product_of_trigrams = 1  # Reset product_of_trigrams for each language
+        product_of_bigrams = 1   # Reset product_of_bigrams for each language
+        
+        for trigram in user_trigrams:
+            for _ in range(user_trigrams[trigram]):
+                product_of_trigrams *= probability_of_ngram(trigram, processed_data["trigrams"])
+                product_of_bigrams *= probability_of_ngram(trigram[:2], processed_data["bigrams"])
         
         probabilities[language] = probability_of_string_given_language(\
             product_of_trigrams,\

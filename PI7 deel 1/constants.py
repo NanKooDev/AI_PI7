@@ -29,5 +29,5 @@ SEMI_GREEN_GRAY = (63,191,63)
 SEMI_GREEN_WHITE = (127, 255, 127)
 
 #Images
-QUEEN = "chess-queen.svg"
+QUEEN = "../chess-queen.svg"
 QUEEN_SIZE = 330
