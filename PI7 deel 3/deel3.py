@@ -68,11 +68,68 @@ def make_ngrams(text: str, n: int) -> dict:
             ngrams[ngram] = 1
     return ngrams
 
-def get_results(user_bigrams: dict, user_trigrams: dict) -> dict:
+def get_normalized_corpus() -> str:
+    """Get the normalized corpus.
+    
+    Returns:
+        str: The normalized corpus.
+    """
+    corpus_text = ""
+    
+    for language in languages.keys():
+        raw_file = open(processed_directory + languages[language], "r", encoding="utf-8")
+        corpus_text += raw_file.read()
+        raw_file.close()
+        
+    return normalize_string(corpus_text)
+
+def probability_of_ngram(ngram: str, corpus_ngrams: dict) -> float:
+    """Calculate the probability of a ngram in the corpus.
+
+    Args:
+        ngram (str): The ngram to calculate the probability of.
+        corpus_ngrams (dict): The ngrams of the corpus.
+
+    Returns:
+        float: The probability of the ngram in the corpus.
+    """
+    ngram_count = 0.0000000001
+    if ngram in corpus_ngrams:
+        ngram_count = corpus_ngrams[ngram]
+    
+    # P(ngram) = count(ngram) / sum(all ngrams)
+    return ngram_count / sum(corpus_ngrams.values())
+
+def probability_of_language(language_trigrams: dict, corpus_trigrams: dict) -> float:
+    """Calculate the probability of a language.
+
+    Args:
+        language_trigrams (dict): The trigrams of the language.
+        corpus_trigrams (dict): The trigrams of the corpus.
+
+    Returns:
+        float: The probability of the language.
+    """
+    # P(language) = sum(all trigrams in language) / sum(all trigrams)
+    return sum(language_trigrams.values()) / sum(corpus_trigrams.values())
+
+def probability_of_string_given_language(product_of_trigram_chance: float, product_of_bigram_chance: float, language_chance: float) -> float:
+    """Calculate the probability of a string given a language.
+    
+    Args:
+        product_of_trigram_chance (float): The product of the trigram chances.
+        product_of_bigram_chance (float): The product of the bigram chances.
+        language_chance (float): The chance of the language.
+        
+    Returns:
+        float: The probability of the string given the language.
+    """
+    return product_of_trigram_chance / product_of_bigram_chance * language_chance
+
+def get_results_using_frequency(user_trigrams: dict) -> dict:
     """Get the results of the analysis of the text.
     
     Args:
-        bigrams (dict): The bigrams of the text.
         trigrams (dict): The trigrams of the text.
         
     Returns:
@@ -82,45 +139,77 @@ def get_results(user_bigrams: dict, user_trigrams: dict) -> dict:
     results = {}
     
     for language in languages.keys():
-        processed_file = open(processed_directory + languages[language], "r", encoding="utf-8")
-        processed_data = json.loads(processed_file.read())
-        processed_file.close()
+        processed_data = read_ngrams_from_file(language)
         
-        bigram_score = 0
-        trigram_score = 0
-        
-        #region get bigram results
-        get_bigram_results_start_time = time.time()
-        
-        for bigram in user_bigrams.keys():
-            if bigram in processed_data["bigrams"]:
-                bigram_score += 1
-        
-        get_bigram_results_stop_time = time.time()
-        get_bigram_results_time = get_bigram_results_stop_time - get_bigram_results_start_time
-        
-        print("Time to get bigram results: ", get_bigram_results_time)
-        
-        #endregion
-        
-        #region get trigram results
-        get_trigram_results_start_time = time.time()
+        score = 0
                 
         for trigram in user_trigrams.keys():
             if trigram in processed_data["trigrams"]:
-                trigram_score += 1
-                
-        get_trigram_results_stop_time = time.time()
-        get_trigram_results_time = get_trigram_results_stop_time - get_trigram_results_start_time
+                score += processed_data["trigrams"][trigram] / processed_data["bigrams"][trigram[:2]]
         
-        print("Time to get trigram results: ", get_trigram_results_time)
-        
-        #endregion
-        
-        
-        results[language] = {"bigrams": bigram_score, "trigrams": trigram_score}
+        results[language] = score
 
     return results
+
+def read_ngrams_from_file(language: str) -> dict:
+    """Read n-grams of a language.
+    
+    Args:
+        language (str): The language to read the n-grams from.
+        
+    Returns:
+        dict: A dictionary with the n-grams and their frequencies.
+    """
+    
+    file = open(processed_directory + languages[language], "r", encoding="utf-8")
+    ngrams = json.loads(file.read())
+    file.close()
+    
+    return ngrams
+
+def get_results_using_probability(user_trigrams: dict) -> dict:
+    """Get the results of the analysis of the text.
+    
+    Args:
+        trigrams (dict): The trigrams of the text.
+        
+    Returns:
+        dict: A dictionary with the results of the analysis.
+    """
+    probabilities = {}
+    
+    product_of_trigrams = 1
+    product_of_bigrams = 1
+    for trigram in user_trigrams.keys():
+        product_of_trigrams *= probability_of_ngram(trigram, make_ngrams(corpus, 3))
+        product_of_bigrams *= probability_of_ngram(trigram[:2], make_ngrams(corpus, 2))
+        
+    for language in languages.keys():
+        processed_data = read_ngrams_from_file(language)
+        
+        probabilities[language] = probability_of_string_given_language(\
+            product_of_trigrams,\
+            product_of_bigrams,\
+            probability_of_language(processed_data["trigrams"], make_ngrams(corpus, 3)))
+        
+    return probabilities
+
+def get_probabilities_from_frequency(trigrams: dict) -> dict:
+    """Get the probabilities of the trigrams based on their frequency.
+    
+    Args:
+        trigrams (dict): The trigrams of the text.
+        
+    Returns:
+        dict: A dictionary with the probabilities of the trigrams.
+    """
+    
+    probabilities = {}
+    
+    for trigram in trigrams.keys():
+        probabilities[trigram] = trigrams[trigram] / sum(trigrams.values())
+    
+    return probabilities
 
 def main() -> None:
     """Main function of the program.
@@ -129,37 +218,22 @@ def main() -> None:
     user_input = input("Enter text to analyze: ")
     user_input = normalize_string(user_input)
     
-    #region make & time ngrams
-    
-        #region make bigrams
-    make_bigrams_start_time = time.time()
-    bigrams = make_ngrams(user_input, 2)
-    make_bigrams_stop_time = time.time()
-    
-    make_bigrams_time = make_bigrams_stop_time - make_bigrams_start_time
-    print("Time to make bigrams: ", make_bigrams_time)
-        #endregion
-    
-        #region make trigrams
-    make_trigrams_start_time = time.time()
     trigrams = make_ngrams(user_input, 3)
-    make_trigrams_stop_time = time.time()
-
-    make_trigrams_time = make_trigrams_stop_time - make_trigrams_start_time
-    print("Time to make trigrams: ", make_trigrams_time)
-        #endregion
     
-    #endregion
+    start_time = time.time()
+    freq_results = get_results_using_frequency(trigrams)
+    print("freq Time: %s seconds" % (time.time() - start_time))
     
-    results = get_results(bigrams, trigrams)
-    
-    #get every language and the amount of bigrams and trigrams that are in the text, and set in a dictionary
-    #the language with the most bigrams and trigrams is the detected language
-    results = {language: results[language]["bigrams"] + results[language]["trigrams"] for language in results.keys()}
+    start_time = time.time()
+    prob_results = get_results_using_probability(trigrams)
+    print("prob Time: %s seconds" % (time.time() - start_time))
         
     
-    print("The language detected is: ", max(results, key=results.get))
-    print("The results are: ", results)
+    print("The language detected using freq is: ", max(freq_results, key=freq_results.get))
+    print("The language detected using prob is: ", max(prob_results, key=prob_results.get))
+    
+    print("The freq results are: ", sorted(freq_results.items(), key=lambda x: x[1], reverse=True))
+    print("The prob results are: ", sorted(prob_results.items(), key=lambda x: x[1], reverse=True))
     
     
     
@@ -212,6 +286,7 @@ def get_languages() -> dict:
     return {file.split(".")[0]: file for file in os.listdir(processed_directory) if file.endswith(".json")} 
 
 languages = get_languages()
+corpus = get_normalized_corpus()
 
 while True:
     main()
