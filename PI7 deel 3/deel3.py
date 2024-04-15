@@ -180,9 +180,10 @@ def get_results_using_probability(user_trigrams: dict) -> dict:
     
     product_of_trigrams = 1
     product_of_bigrams = 1
-    for trigram in user_trigrams.keys():
-        product_of_trigrams *= probability_of_ngram(trigram, make_ngrams(corpus, 3))
-        product_of_bigrams *= probability_of_ngram(trigram[:2], make_ngrams(corpus, 2))
+    for trigram in user_trigrams:
+        for _ in range(user_trigrams[trigram]):
+            product_of_trigrams *= probability_of_ngram(trigram, make_ngrams(corpus, 3))
+            product_of_bigrams *= probability_of_ngram(trigram[:2], make_ngrams(corpus, 2))
         
     for language in languages.keys():
         processed_data = read_ngrams_from_file(language)
